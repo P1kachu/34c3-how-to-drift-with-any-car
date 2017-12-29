@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Drifting with any car</title>
+        <meta name="description" content="(without your mom yelling at you)">
+        <meta name="author" content="Stanislas 'P1kachu' Lejay - Guillaume 'zours' Heilles">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+        <link rel="stylesheet" href="reveal.js/css/reveal.css">
+        <link rel="stylesheet" href="reveal.js/css/theme/black.css" id="theme">
+        <link rel="stylesheet" href="reveal.js/lib/css/darkula.css">
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'reveal.js/css/print/pdf.css' : 'reveal.js/css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+        <!--[if lt IE 9]>
+            <script src="lib/js/html5shiv.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section>
+                    <h1>Drifting with any car</h1>
+                    <h4>(without your mom yelling at you)</h4>
+                    <img style="max-height: 250px;"  src="rsc/banner.png">
+                    <p>Stanislas 'P1kachu' Lejay - Guillaume 'zours' Heilles</p>
+                    <p>34c3</p>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Who are we ?`
+
+```markdown
+* Stanislas `P1kachu` Lejay
+* IT student at EPITA (France)
+* Member of EPITA's System and Security Lab (LSE)
+* Intern at Quarkslab
+* Likes:
+  * Reverse engineering
+  * Car and mechanics related stuff
+  * Anything that looks stupid
+```
+
+```markdown
+* Guillaume `zours` Heilles
+* Embedded security engineer at Quarkslab
+* Worked in the automotive industry for 3 years
+* Specialized himself in security after that
+* Likes:
+  * Reversing software
+  * Spying into electronic protocols
+  * Dumping flash memories
+  * Micro-soldering
+  * Decapsulating chips
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `What is this talk about`
+
+```markdown
+1 - How to drift with any car:
+  * Automotive systems 101
+  * Things you can do with them
+  * What we ~ actually ~ did with them
+```
+```markdown
+2 - How to properly write an Amazon review:
+  * OBD dongle analysis
+  * Hardware reverse engineering
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        # Part 1
+
+![Image](rsc/drift-gif.gif)
+<!-- .element: style="max-height: 300px;"-->
+
+`Drifting with any car`
+
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        
+`Err... oh, right, the plan.`
+
+![Image](rsc/blinker2.gif)
+<!-- .element: style="max-height: 250px;"-->
+
+``` markdown
+* The official goal: look at how a car works
+* What arised: what can one do with modern car systems?
+* Restrictions: I am not allowed to remove any part of the cars :(
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        ## Test subjects
+![Image](rsc/tests-subjects.gif)
+<!-- .element: style="max-height: 300px;"-->
+
+`Let's play with expensive toys`
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `VW Polo IV Facelift 1.4i 16V 80cv (~2006)`
+
+![Image](rsc/poloIV.png)
+<!-- .element: style="max-height: 500px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        
+`VW Polo V 1.2i 12V 60cv (~2013)`
+
+![Image](rsc/poloV.png)
+<!-- .element: style="max-height: 500px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        
+`Fiat Nuova 500C 1.2MPi 69cv (~2010)`
+
+![Image](rsc/fiat500.png)
+<!-- .element: style="max-height: 500px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        ## Talking with the cars
+
+![Image](rsc/turnon.gif)
+<!-- .element: style="max-height: 300px;"-->
+
+`Automotive systems 101`
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `ECUs`
+
+``` markdown
+* Stands for Electronic Control Unit
+* A lot of them in modern cars (Engine/PCM/TCM/ABS/etc)
+* They talk to each other over the CAN Bus
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Controller Area Network (CAN)`
+
+``` markdown
+* Message-based broadcast protocol
+* Messages are mostly composed of:
+  * an arbitration ID (11 or 29 bits)
+  * data
+```
+<!-- .element: style="font-size: 0.40em;" -->
+
+![Image](rsc/canmessage.png)
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `On Board Diagnostics (OBD-II)`
+
+``` markdown
+* "Vehicle self-diagnostic and reporting capability"
+* Allows devices to query informations about a car
+* Provides Parameter IDs (PIDs) and Diagnostic Trouble Codes (DTCs)
+```
+
+![Image](rsc/obd2.png)
+<!-- .element: style="max-height: 300px;"-->
+![Image](rsc/pi.png)
+<!-- .element: style="max-height: 300px;"-->
+
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `In python`
+
+```python
+import can # pip install python-can
+
+is_11_bits = True
+
+bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
+
+# Can be read as "2 bytes indicating the request for
+# the field 0x0c (rpm), in mode 0x1"
+data = [2, 0x1, 0x0c, 0, 0, 0, 0, 0]
+
+if is_11_bits:
+    msg = can.Message(arbitration_id=0x7df, data=data)
+else:
+    msg = can.Message(arbitration_id=0x18DB33F1, data=data, extended_id=True)
+
+bus.send(msg)
+answer = bus.recv()
+rpm = (answer.data[3] * 256 + answer.data[4]) / 4
+```
+<!-- .element: style="font-size: 0.48em;" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        
+
+## Getting to know each other
+
+![Image](rsc/topgear.gif)
+
+`Theory: Done. Now, in practice…`
+
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `First dialogue`
+
+```markdown
+* First OBD answer was from the 2013 Polo
+* Recent car: gateway between bus and OBD port
+```
+<!-- .element: style="font-size: 0.50em;" -->
+``` bash
+pi@piCANchu:src$ candump -a -d -e -x can0 # RPM
+  can0  TX - -       7DF   [8]  02 01 0C 00 00 00 00 00   '........'
+  can0  RX - -       7E8   [8]  04 41 0C 0D 2C AA AA AA   '.A..,...'
+pi@piCANchu:src$ candump -a -d -e -x can0 # Engine coolant temperature
+  can0  TX - -       7DF   [8]  02 01 05 00 00 00 00 00   '........'
+  can0  RX - -       7E8   [8]  03 41 05 83 AA AA AA AA   '.A......'
+```
+<!-- .element: style="font-size: 0.50em;" -->
+```markdown
+RPM = 0x0D << 8 + 0x2C = 3372
+Temp = 131 - 40 = 91ºC        # -40 < T < 215.
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Displaying everything`
+
+![Image](rsc/polo1.gif)
+<!-- .element: style="max-height: 250px;"-->
+![Image](rsc/polo2.gif)
+<!-- .element: style="max-height: 250px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        
+`Getting more info`
+
+```markdown
+* ~140 standard OBD PIDs:
+  * RPM
+  * Speed
+  * Fuel Level
+  * etc.
+```
+```markdown
+* A lot more are constructor specific:
+  * Steering wheel position
+  * Brake/clutch pedals positions
+  * Gearbox state
+  * Lights/blinkers
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `O_RDONLY`
+
+```markdown
+* Nice, we can query stuff
+* Can we modify anything interesting from OBD
+* First issue: what protocol am I talking to ?
+  * KWP2000 ?
+  * UDS ?
+  * ISO-TP ?
+  * VW-TP 2.0 (like, really?)
+  * etc.
+```
+```markdown
+* Let's try sending classic message for each known protocol
+* Look for a valid answer
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `UDS - ISO 14229`
+
+```markdown
+* The 2013 Polo understands UDS
+* Allows for various operations:
+  * reset ECUS
+  * query ECU specific PIDs
+  * read DTC information
+  * etc
+```
+```markdown
+* Allows nicer stuff (like "dump the firmware")
+* Available through security sessions only
+* This requires authentication through a challenge-response.
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Challenge-response`
+
+``` bash
+pi@piCANchu:~/src $ ./polo-can/scripts/uds.py
+# Initialize diagnostic session
+TX: ID: 07e0    000    DLC: 8    02 10 03 00 00 00 00 00
+RX: ID: 07e8    000    DLC: 8    06 50 03 00 32 01 f4 aa
+# Query seed for security session
+TX: ID: 07e0    000    DLC: 8    02 27 03 00 00 00 00 00
+RX: ID: 07e8    000    DLC: 8    06 67 03 fe 44 7f 0c aa
+Security session seed: [254, 68, 127, 12]
+# Compute answer, send it back
+# ECU computes answer too, and compare
+```
+
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Well done, Volkswagen`
+
+```markdown
+* And sadly, the job has been correctly done:
+  * 4 bytes seed, different at each try
+  * More than 3 seconds required between each try
+  * Freezes for more than 10 minutes after a few failed attempts
+```
+``` markdown
+* Break this:
+  * Bruteforce? Way too long.
+  * Timing attacks? CAN way too "unstable"
+  * Disassemble the car and– NOPE.
+  * Get pieces from a repair shop? tedious, and I'm broke (student's life)
+```
+<!-- .element: style="font-size: 0.45em;" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Hum, too old or too recent...`
+
+![Image](rsc/timeframe.png)
+```markdown
+Who's left... Oh.
+```
+```markdown
+Moooooom?
+```
+<!-- .element: class="fragment" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Italy, 2010`
+
+```markdown
+I needed a more talkative car
+> Me:  Mom, when was your Fiat built ?
+> Mom: 2010, I think. Why ?
+I smile, she regrets
+```
+```bash
+pi@piCANchu:~/src 21:47:10 $ candump -a -d -e -x can0 > test
+^Cpi@piCANchu:~/src 21:47:14 $ cat test | wc -l
+2225
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `A bit of RE`
+
+```markdown
+* Lots of messages are broadcast (+500/sec)
+* few different arbitration IDs
+* Messages evolve when performing actions in the car
+* Let's try to understand them
+* Tricky with candump (messages dumped on stdout)
+* python-can-monitor helps a lot (groups messages by ID)
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `python-(socket)can-monitor`
+
+![Image](rsc/canmonitor.gif)
+<!-- .element: style="max-height: 500px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        
+`./canmonitor.py can0`
+
+```bash
+# Line 1: At stop, handbrake up, contact off, clutch and brake pedals released
+# Line 2: Driving, handbrake down, contact on, downshifting, braking
+
+# Speed (4 times) - Each wheel sensor ? Different but close times ?
+0218a006     00 2C 00 2C 00 2C 00 2C       # 00 2C => Default value if speed < 3 km/h
+0218a006     03 D3 03 CF 03 DO 03 CF       # 03 D3 => 0x3 * 16 + 0xd3 / 16 = 61 km/h
+
+# Clutch pedal wrt accelerator (byte 5)
+0628a001     00 0F 00 80 0A 00 00 21       # 00: Clutch pedal released
+0628a001     00 0F 00 80 07 20 00 21       # 20: Depressing clutch pedal without accelerating
+
+# Brake pedal (byte 3 - bits 4-7)
+0810a000     01 FF 18 00                   # 1x: Brakes pedal released (brake lights off)
+0810a000     01 FF 78 00                   # 7x: Brakes pedal normal/high depression
+
+# Doors (byte 2), contact (byte 2), handbrake (bytes 0 and 6), ...
+0a18a000     20 09 10 79 00 47 20 D4       # Handbrake up, contact off
+0a18a000     00 09 40 77 00 5F 00 05       # Handbrake down, contact on
+
+# Guess :)
+0c28a000     21 02 24 05 20 17
+0c28a000     15 17 03 06 20 17
+
+```
+<!-- .element: style="font-size: 0.40em;" -->
+
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        ![Image](rsc/interface.gif)
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `What can we do with that ?`
+
+```markdown
+* Something useful for humanity
+* Something challenging
+* Something I can put on a resume
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Ooooor... `
+
+![Image](rsc/coucou.png)
+
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Introducting CANPad`
+
+```markdown
+With a steering wheel, a brake pedal and a gas pedal, we
+can drive any car in any video game. So that's what I did :)
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `How CANPad works`
+![Image](rsc/canpadv1.png)
+
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        
+`Demonstration - VDrift`
+
+![Image](rsc/vdrift.png)
+
+(Full version on YouTube [here](https://www.youtube.com/watch?v=-q2togYPXas))
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        
+`"features" and limitations`
+
+```markdown
+* Available commands
+  * Gas pedal [0 -> 255]
+  * Brakes pedal [0 -> 2]
+  * Clutch pedal [0 | 1] (unused atm)
+  * Steering wheel [-0x450 -> 0x450] (approximately)
+  * Handbrake [0 | 1]
+  * On/Off switch (City mode)
+```
+```markdown
+* Limitations:
+  * Engine needs to be started (consumes gas)
+  * Steering wheel doesn't come back itself to position 0
+  * Controller's simplicity limits it to VDrift
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `But I really wanted to drift...`
+
+`Oh wait. I made another version!`
+<!-- .element: class="fragment" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `CANPADv2 - What really changes`
+
+![Image](rsc/canpadv2.png)
+<!-- .element: style="max-height: 300px;"-->
+
+```markdown
+* Instead of simulating a controller, I hijack a real one's input
+* Few unrelated updates:
+  - Gas pedal can be adjusted
+  - Steering wheel rotation can be (and was) adjusted.
+  - Found direct command to query handbrake, so no more delay
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Demonstration - Dirt Showdown`
+
+![Image](rsc/dirt.png)
+<!-- .element: style="max-height: 400px;"-->
+
+(Full version on YouTube [here](https://www.youtube.com/watch?v=bB7m7J3ioQw))
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `I can finally drift with FWD cars \o/`
+![Image](rsc/_gup.gif)
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Possible upgrades`
+
+```markdown
+* Get the gearbox status to put the game in manual (and reverse)
+* Create a better gamepad to be able to race on Mac or Windows
+```
+![Image](rsc/upgrades.gif)
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Alright, this is fun...`
+
+![Image](rsc/end.gif)
+
+`...but this consumes actual gas for *nothing*`
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        # Part 2
+`How to write an Amazon review`
+![Image](rsc/amazon_nitro.png)
+<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `A cool OBD2 dongle to save fuel`
+
+```markdown
+* What is an OBD2 dongle?
+```
+![Image](rsc/OBD2port.jpg)
+<!-- .element: style="max-height: 400px;"-->
+
+<!-- T'as vu que j'ai un slides sur l'OBD2 et une photo au debut ? Juste pour etre sur qu'on se repete pas -->
+<!-- Yes j'avais prévu d'y faire référence -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Nitro OBD2`
+
+```markdown
+* The Nitro OBD2 is sold on Amazon
+* It is supposed to:
+	* save fuel
+	* reprogram your engine to give more power
+* It works on any recent car, from any manufacturer
+	* cars manufactured after 1998 in the US
+	* cars manufactured after 2001 in the European Union
+	* cars manufactured after 2004 in Asia
+
+```
+![Image](rsc/amazon_comment.png)
+<!-- .element: style="max-height: 400px;"-->
+
+<!-- Ptet rajouter "It is supposed to" ? Histoire que si des mecs lisent les slides sans la conf, ils se disent pas "ils sont super cons ces deux la" -->
+<!-- Dac, done -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Why reversing this dongle?`
+
+```markdown
+* We will find all ECU authentication algorithms for all cars
+* The dongle finds the best settings for your engine
+	* it must contain a very smart algorithm
+* It can reprogram any engine
+	* also contains a database to reprogram any ECU
+* "After unplug you go back to the factory settings."
+	* only modifies the ECU's RAM / volatile memory
+```
+![Image](rsc/wow.gif)
+<!-- .element: style="max-height: 400px;"-->
+
+<!-- J'aime bien! -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        ## CAN analysis
+
+`Recording the CAN activity`
+
+```markdown
+* RaspberryPi3 + PiCAN2
+* P1kachu's port of python-can-monitor
+```
+<!-- C'est un port, pas vraiment mon python-socketcan-monitor :p -->
+<!-- Hagrid ! -->
+
+![Image](rsc/IMG_20170831_185846.jpg)
+<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `CAN analysis of the Nitro OBD2`
+```markdown
+* Only one OBD2 port
+* So how to plug the Nitro and the PiCAN at the same time?
+```
+
+![Image](rsc/nitro_no_more_place.jpg)
+<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `CAN analysis of the Nitro OBD2`
+```markdown
+* Solder the PiCAN wires to the Nitro dongle
+  * CAN_High
+  * CAN_Low
+  * Ground
+```
+
+![Image](rsc/IMG_20170831_231327.jpg)
+<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `CAN messages of the Nitro OBD2`
+<!-- Proposition d'edit: j'ai refais la slide un peu plus propre, et j'ai crop les photos-->
+
+```markdown
+The message IDs are the same: no message sent by the NitroOBD2
+```
+
+![Image](rsc/can_nitro.png)
+<!-- .element: style="max-height: 500px;"-->
+![Image](rsc/can_no_nitro.png)
+<!-- .element: style="max-height: 500px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Is it already over?`
+
+`Nope!`
+<!-- .element: class="fragment" -->
+
+```markdown
+* The dongle is supposed to reprogram the engine after 120km.
+* Could it work without sending anything during the first 120km?
+```
+<!-- .element: class="fragment" -->
+
+```markdown
+* We need another approach: PCB analysis
+```
+<!-- .element: class="fragment" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        ## PCB analysis
+
+```markdown
+* 2 PCBs, one for routing the CAN signals, power and ground
+```
+
+![Image](rsc/nitro2.jpg)
+<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `OBD connexion board`
+
+![Image](rsc/nitro_obd_board.jpg)
+<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        ```markdown
+* The other contains very few components on the front side:
+	- a voltage regulator
+	- a push button
+	- 3 LEDs
+* Back side:
+  - a tiny tiny SOP-8 chip
+```
+
+![Image](rsc/dongle-circuit.jpg)
+<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Back side`
+
+![Image](rsc/nitro_with_chip.jpg)
+<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Wait... where is the CAN transceiver?!?`
+
+![Image](rsc/slide47.png)
+
+`Is the CAN transceiver really necessary?`
+[StackOverflow discussion: goo.gl/8UUMfY](http://goo.gl/8UUMfY)
+
+`Is there one inside the chip?`
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        ## Chip decapsulation
+
+![Image](rsc/amazon.jpg)<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        ```markdown
+* Sulfuric acid at 200°C
+* A cooking plate
+* A creme brulee (well just its ceramic plate)
+* 100-200x microscope
+* Pretty easy but protect yourself !
+	* gloves, glasses, old infosec conference hoodie
+```
+
+![Image](rsc/stan_toxic.png)
+<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        ```markdown
+* Looks like a standard tiny microcontroller (Arduino, ATtiny85)
+* No CAN transceiver inside...
+```
+
+<!-- J'ai remplace la phrase par une caption sous la photo -->
+
+![Image](rsc/TJA1050_Nitro.jpg)
+<!-- .element: style="max-height: 400px;"--></br>
+_Comparison with a CAN transceiver_
+<!-- .element: style="font-size: 0.40em;" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Looking for a chip reference`
+
+![Image](rsc/nitro_obd2_annotated.jpg)
+<!-- .element: style="max-height: 400px;"--></br>
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Chip reference`
+
+![Image](rsc/chip_name.jpg)
+<!-- .element: style="max-height: 400px;"-->
+
+`T3881E`
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Conclusion`
+
+```markdown
+* No CAN communication
+* No CAN transceiver
+* Not enough power to emulate a CAN transceiver in software
+* Not enough FLASH to manage every car
+```
+`But does make the LEDs blink!`
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Oh yes I forgot...`
+
+`If you want to reprogram your engine, use something else !`
+<!-- .element: class="fragment" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `"I wanna play with cars too!"`
+
+[https://github.com/P1kachu/talking-with-cars](https://github.com/P1kachu/talking-with-cars)
+
+![Image](rsc/pika.png)
+![Image](rsc/zours.png)<!-- .element: style="max-height: 279px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        * RaspberryPi 3: $30
+* [PiCAN2](http://skpang.co.uk/catalog/pican2-canbus-board-for-raspberry-pi-23-p-1475.html), CAN bus shield for the RPi: $30
+* [OBD2 cable](http://skpang.co.uk/catalog/obdii-to-db9f-odii-cable-18m-p-654.html): <$10
+
+```markdown
+* No need to take anything apart
+* You can do some fuzzing (but not while the engine is running)
+* Try to get information from your car
+* You can even try to dump some firmwares and reverse them
+```
+
+`Disclaimer: you can break your car or hurt yourself`
+
+`Take all necessary precautions. If you're unsure, double-check before!`
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Thank you`
+
+![Image](rsc/fans.png)
+<!-- .element: style="max-height: 400px;"-->
+
+[@P1kachu](https://twitter.com/0xP1kachu) | [@PapaZours](https://twitter.com/PapaZours)
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Many other chip tuning OBD2 dongles`
+
+![Image](rsc/thumb_stage-1-performance-chip-obdii-module.jpg)
+<!-- .element: style="max-height: 400px;"-->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Other Nitro OBD2 dongles with PIC16F59, but still no CAN transceiver...`
+
+![Image](rsc/nitro_big.jpg)
+<!-- .element: style="max-height: 400px;"-->
+
+                    </script>
+                </section>
+                
+            </div>
+        </div>
+
+        <script src="reveal.js/lib/js/head.min.js"></script>
+        <script src="reveal.js/js/reveal.js"></script>
+        <a style="display: block;">
+            <img style="position: absolute; bottom: 20px; left: 30px; border: 0; width: 10%;" src="rsc/lse2.svg">
+            <img style="position: absolute; bottom: 20px; right: 30px; border: 0; width: 8%;" src="rsc/qb.png">
+        </a>
+        <script>
+            Reveal.initialize({
+                controls: false,
+                progress: true,
+                slideNumber: true,
+                history: true,
+                keyboard: true,
+                overview: true,
+                center: true,
+                touch: true,
+                loop: false,
+                rtl: false,
+                fragments: true,
+                embedded: false,
+                help: false,
+                showNotes: false,
+                autoSlide: 0,
+                autoSlideStoppable: true,
+                mouseWheel: false,
+                hideAddressBar: true,
+                previewLinks: false,
+                transition: "slide",
+                transitionSpeed: "default",
+                backgroundTransition: "default",
+                viewDistance: 3,
+                parallaxBackgroundImage: "",
+                parallaxBackgroundSize: "",
+                parallaxBackgroundHorizontal: null,
+                parallaxBackgroundVertical: null,
+
+                dependencies: [
+                { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+                { src: 'reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                { src: 'reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                { src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+                { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true },
+                { src: 'reveal.js/plugin/notes/notes.js', async: true }
+                ]
+            });
+        </script>
+
+    </body>
+</html>
